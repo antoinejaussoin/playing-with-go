@@ -48,7 +48,7 @@ func calculatePi(numberOfIterations int, numberOfBatches int) float64 {
 	go func() {
 		wg.Wait()
 		close(channel)
-		fmt.Println("close channel")
+		fmt.Println("close")
 	}()
 
 	fmt.Println("after wait")
