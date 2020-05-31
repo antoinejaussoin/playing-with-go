@@ -89,7 +89,7 @@ func calculatePart(from int, to int) float64 {
 		} else {
 			pi += 1 / factor
 		}
+		// isNegative = !isNegative
 	}
-	// channel <- pi
 	return pi
 }
