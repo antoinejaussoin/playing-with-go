@@ -20,14 +20,14 @@ namespace playing_with_go
       for (int i = 1; i <= numberOfIterations; i++)
       {
         var isNegative = i % 2 == 0 ? false : true;
-        int factor = i * 2 + 1;
+        float factor = i * 2 + 1;
         if (isNegative)
         {
-          pi -= 1 / (float)factor;
+          pi -= 1 / factor;
         }
         else
         {
-          pi += 1 / (float)factor;
+          pi += 1 / factor;
         }
       }
       return pi * 4;
