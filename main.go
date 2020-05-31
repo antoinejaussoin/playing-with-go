@@ -2,25 +2,31 @@ package main
 
 import (
 	"fmt"
+	"sync"
 	"time"
 )
 
 func main() {
 	fmt.Println("hello world")
 	start := time.Now()
-	fmt.Println(calculatePi(1000000000, 80))
+	fmt.Println(calculatePi(1000000000, 8))
 	elapsed := time.Since(start)
 	fmt.Println("calculatePi took %s", elapsed)
 }
 
 func calculatePi(numberOfIterations int, numberOfBatches int) float64 {
 	// Pi/4 = 1 - 1/3 + 1/5 - 1/7 + ...
+	channel := make(chan float64)
+	var wg sync.WaitGroup
 	var pi float64 = 1
 	var batches = calculateBatches(numberOfIterations, numberOfBatches)
 
 	for _, batch := range batches {
-		pi += calculatePart(batch.from, batch.to)
+		wg.Add(1)
+		go calculatePart(batch.from, batch.to, channel, &wg)
 	}
+
+	wg.Wait()
 	//for p:= 0; p < 8; p++ {
 
 	//}
@@ -55,7 +61,9 @@ func calculateBatches(numberOfIterations int, numberOfBatches int) []Batch {
 	return batches
 }
 
-func calculatePart(from int, to int) float64 {
+func calculatePart(from int, to int, channel chan float64, wg *sync.WaitGroup) {
+	defer wg.Done()
+
 	var pi float64 = 0
 	for i := from + 1; i <= to; i++ {
 		var isNegative bool = true
@@ -69,5 +77,6 @@ func calculatePart(from int, to int) float64 {
 			pi += 1 / factor
 		}
 	}
-	return pi
+	// channel <- pi
+	// return pi
 }
