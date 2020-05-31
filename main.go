@@ -9,40 +9,55 @@ import (
 func main() {
 	fmt.Println("hello world")
 	start := time.Now()
-	fmt.Println(calculatePi(1000000000, 8))
+	fmt.Println(calculatePi(1000000000, 4))
 	elapsed := time.Since(start)
-	fmt.Println("calculatePi took %s", elapsed)
+	fmt.Println("calculatePi async took %s", elapsed)
+
+	start = time.Now()
+	fmt.Println(calculatePiSync(1000000000))
+	elapsed = time.Since(start)
+	fmt.Println("calculatePi sync took %s", elapsed)
+}
+
+func calculatePiSync(numberOfIterations int) float64 {
+	// Pi/4 = 1 - 1/3 + 1/5 - 1/7 + ...
+	var pi float64 = 1
+	pi += calculatePart(0, numberOfIterations)
+
+	return pi * 4
 }
 
 func calculatePi(numberOfIterations int, numberOfBatches int) float64 {
 	// Pi/4 = 1 - 1/3 + 1/5 - 1/7 + ...
-	channel := make(chan float64)
 	var wg sync.WaitGroup
 	var pi float64 = 1
 	var batches = calculateBatches(numberOfIterations, numberOfBatches)
+	channel := make(chan float64, len(batches))
 
 	for _, batch := range batches {
 		wg.Add(1)
-		go calculatePart(batch.from, batch.to, channel, &wg)
+		go func(b Batch) {
+			defer wg.Done()
+			channel <- calculatePart(b.from, b.to)
+			fmt.Println("calc done")
+		}(batch)
 	}
 
-	wg.Wait()
-	//for p:= 0; p < 8; p++ {
+	fmt.Println("before wait")
 
-	//}
+	go func() {
+		wg.Wait()
+		close(channel)
+		fmt.Println("close channel")
+	}()
 
-	// for i := 1; i <= numberOfIterations; i++ {
-	// 	var isNegative bool = true;
-	// 	if i % 2 == 0 {
-	// 		isNegative = false
-	// 	}
-	// 	var factor float64 = float64(i * 2 + 1)
-	// 	if isNegative {
-	// 		pi -= 1 / factor
-	// 	} else {
-	// 		pi += 1 / factor
-	// 	}
-	// }
+	fmt.Println("after wait")
+
+	for s := range channel {
+		fmt.Println("waiting for channel")
+		pi += s
+	}
+
 	return pi * 4
 }
 
@@ -61,9 +76,7 @@ func calculateBatches(numberOfIterations int, numberOfBatches int) []Batch {
 	return batches
 }
 
-func calculatePart(from int, to int, channel chan float64, wg *sync.WaitGroup) {
-	defer wg.Done()
-
+func calculatePart(from int, to int) float64 {
 	var pi float64 = 0
 	for i := from + 1; i <= to; i++ {
 		var isNegative bool = true
@@ -78,5 +91,5 @@ func calculatePart(from int, to int, channel chan float64, wg *sync.WaitGroup) {
 		}
 	}
 	// channel <- pi
-	// return pi
+	return pi
 }
